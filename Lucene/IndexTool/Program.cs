@@ -12,7 +12,7 @@ namespace IndexTool
         private static Options options = new Options();
         static void Main(string[] args)
         {
-            Debugger.Launch();
+            //Debugger.Launch();
             bool success = CommandLine.Parser.Default.ParseArguments(args, options, OnVerbCommand);
             if (!success)
             {
@@ -22,10 +22,15 @@ namespace IndexTool
 
         private static void OnVerbCommand(string verb, object verbSubOptions)
         {
+            if (verbSubOptions == null)
+                return;
             switch (verb)
             {
-                case "Reindex":
+                case "reindex":
                     DoReindex((ReindexSubOptions) verbSubOptions);
+                    break;
+                case "adddoc":
+                    AddDocument((AddDocumentSubOptions) verbSubOptions);
                     break;
 //                case "help":
 //                    DoHelp((string)verbSubOptions);
@@ -33,9 +38,9 @@ namespace IndexTool
             }
         }
 
-        private static void DoHelp(string verbName)
+        private static void AddDocument(AddDocumentSubOptions verbSubOptions)
         {
-            Console.WriteLine(options.GetUsage(verbName));
+            Console.WriteLine(verbSubOptions.LuceneIndexRoot);
         }
 
         private static void DoReindex(ReindexSubOptions verbSubOptions)
