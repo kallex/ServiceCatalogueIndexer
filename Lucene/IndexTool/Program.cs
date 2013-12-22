@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using System.Xml.Serialization;
+using Lucene.Net.Documents;
 
 namespace IndexTool
 {
@@ -66,7 +70,10 @@ namespace IndexTool
             Console.WriteLine("Results ("+ result.Length + "):");
             foreach (var doc in result)
             {
-                Console.WriteLine(doc.GetField("ServiceName"));
+                string[] lines = doc.GetFields().Where(field => field.Name != "ID").Select(field => field.Name + "\t" + field.StringValue).ToArray();
+                Console.WriteLine(doc.Get("ID") + ":");
+                Array.ForEach(lines, Console.WriteLine);
+                Console.WriteLine("----------------------");
             }
         }
 
@@ -77,7 +84,30 @@ namespace IndexTool
 
         private static void DoAddDocument(AddDocumentSubOptions verbSubOptions)
         {
-            Console.WriteLine(verbSubOptions.LuceneIndexRoot);
+            FileInfo[] files = verbSubOptions.GetDocumentFiles();
+            XmlSerializer serializer = new XmlSerializer(typeof(ServiceModelType));
+            List<Document> docs = new List<Document>();
+            foreach (var file in files)
+            {
+                ServiceModelType serviceModel = (ServiceModelType) serializer.Deserialize(file.OpenRead());
+                foreach (var service in serviceModel.Services)
+                {
+                    foreach (var serviceMethod in service.Service.SelectMany(ser => ser.Method))
+                    {
+                        string id = file.Name;
+                        string serviceNameSpace = String.IsNullOrEmpty(serviceMethod.semanticName)
+                                                      ? service.contractNamespaceName
+                                                      : serviceMethod.semanticName;
+                        Document doc = new Document();
+                        doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.ANALYZED));
+                        doc.Add(new Field("ServiceDomainName", serviceNameSpace, Field.Store.YES, Field.Index.ANALYZED));
+                        doc.Add(new Field("ServiceName", serviceMethod.name, Field.Store.YES, Field.Index.ANALYZED));
+                        Field field;
+                        docs.Add(doc);
+                    }
+                }
+            }
+            LuceneSupport.LuceneSupport.AddDocuments(verbSubOptions.LuceneIndexRoot, docs.ToArray());
         }
 
         private static void DoReindex(ReindexSubOptions verbSubOptions)

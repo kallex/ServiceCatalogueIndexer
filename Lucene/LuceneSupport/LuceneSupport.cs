@@ -26,8 +26,12 @@ namespace LuceneSupport
             Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
             var writer = new IndexWriter(indexDirectory, analyzer, true, IndexWriter.MaxFieldLength.UNLIMITED);
 
-            foreach(var doc in docs)
-                writer.AddDocument(doc);
+            foreach (var doc in docs)
+            {
+                string id = doc.GetField("ID").StringValue;
+                writer.UpdateDocument(new Term("ID", id), doc);
+                //writer.AddDocument(doc);
+            }
             writer.Optimize();
             writer.Flush(true, true, true);
             writer.Dispose();
