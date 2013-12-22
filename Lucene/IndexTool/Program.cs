@@ -24,13 +24,29 @@ namespace IndexTool
         {
             if (verbSubOptions == null)
                 return;
+            CommonSubOptions commonOptions = (CommonSubOptions) verbSubOptions;
+            try
+            {
+                commonOptions.Validate();
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(ex.Message);
+                return;
+            }
             switch (verb)
             {
                 case "reindex":
                     DoReindex((ReindexSubOptions) verbSubOptions);
                     break;
                 case "adddoc":
-                    AddDocument((AddDocumentSubOptions) verbSubOptions);
+                    DoAddDocument((AddDocumentSubOptions) verbSubOptions);
+                    break;
+                case "removedoc":
+                    DoRemoveDocument((RemoveDocumentSubOptions) verbSubOptions);
+                    break;
+                case "query":
+                    DoQuery((QuerySubOptions) verbSubOptions);
                     break;
 //                case "help":
 //                    DoHelp((string)verbSubOptions);
@@ -38,7 +54,28 @@ namespace IndexTool
             }
         }
 
-        private static void AddDocument(AddDocumentSubOptions verbSubOptions)
+        private static void DoQuery(QuerySubOptions verbSubOptions)
+        {
+            string queryText = verbSubOptions.QueryText;
+            if (String.IsNullOrEmpty(queryText))
+            {
+                Console.Write("Enter query text: ");
+                queryText = Console.ReadLine();
+            }
+            var result = LuceneSupport.LuceneSupport.PerformQuery(verbSubOptions.LuceneIndexRoot, queryText, "ServiceDomainName");
+            Console.WriteLine("Results ("+ result.Length + "):");
+            foreach (var doc in result)
+            {
+                Console.WriteLine(doc.GetField("ServiceName"));
+            }
+        }
+
+        private static void DoRemoveDocument(RemoveDocumentSubOptions verbSubOptions)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static void DoAddDocument(AddDocumentSubOptions verbSubOptions)
         {
             Console.WriteLine(verbSubOptions.LuceneIndexRoot);
         }

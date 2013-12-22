@@ -21,6 +21,8 @@ namespace IndexTool
         {
             ReindexVerb = new ReindexSubOptions();
             AddDocumentVerb = new AddDocumentSubOptions();
+            RemoveDocumentVerb = new RemoveDocumentSubOptions();
+            QueryVerb = new QuerySubOptions();
         }
 
         [VerbOption("reindex", HelpText = "Reindex whole catalogue")]
@@ -28,6 +30,19 @@ namespace IndexTool
 
         [VerbOption("adddoc", HelpText = "Add or update document in index")]
         public AddDocumentSubOptions AddDocumentVerb { get; set; }
+
+        [VerbOption("removedoc", HelpText = "Remove document from index")]
+        public RemoveDocumentSubOptions RemoveDocumentVerb { get; set; }
+
+        [VerbOption("query", HelpText = "Query document index")]
+        public QuerySubOptions QueryVerb { get; set; }
+
+    }
+
+    class QuerySubOptions : CommonSubOptions
+    {
+        [Option('q', "queryText", HelpText = "Query text. For more complex queries leave this out for query line entering.")]
+        public string QueryText { get; set; }
     }
 
     abstract class CommonSubOptions
@@ -43,17 +58,40 @@ namespace IndexTool
         {
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ServiceCatalogueIndexTool" ,IndexName); }
         }
+
+        protected virtual void validateSelf()
+        {
+            
+        }
+        public void Validate()
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(CatalogueRepositoryRoot);
+            if(dirInfo.Exists == false)
+                throw new ArgumentException("Invalid CatalogueRepositoryRoot value (directory not found): " + CatalogueRepositoryRoot);
+            validateSelf();
+        }
     }
 
     class ReindexSubOptions : CommonSubOptions
     {
-        
     }
 
     class AddDocumentSubOptions : CommonSubOptions
     {
-        [Option('d', "documentFile", HelpText = "Document file name.", Required = true)]
-        public string DocumentFileName { get; set; }
+        [Option('d', "documentFilter", HelpText = "Document file filter (applied from Repository Root)", Required = true)]
+        public string DocumentFilter { get; set; }
+
+        public FileInfo[] GetDocumentFiles()
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(CatalogueRepositoryRoot);
+            return dirInfo.GetFiles(DocumentFilter, SearchOption.AllDirectories);
+        }
+    }
+
+    class RemoveDocumentSubOptions : CommonSubOptions
+    {
+        [Option('i', "documentId", HelpText = "Document ID to remove from index", Required = true)]
+        public string DocumentID { get; set; }
     }
 }
 
