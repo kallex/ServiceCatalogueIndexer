@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 
 namespace IndexTool
@@ -66,7 +67,8 @@ namespace IndexTool
                 Console.Write("Enter query text: ");
                 queryText = Console.ReadLine();
             }
-            var result = LuceneSupport.LuceneSupport.PerformQuery(verbSubOptions.LuceneIndexRoot, queryText, "ServiceDomainName");
+            var result = LuceneSupport.LuceneSupport.PerformQuery(verbSubOptions.LuceneIndexRoot, queryText, "ServiceDomainName",
+                new WhitespaceAnalyzer());
             Console.WriteLine("Results ("+ result.Length + "):");
             foreach (var doc in result)
             {
@@ -79,7 +81,8 @@ namespace IndexTool
 
         private static void DoRemoveDocument(RemoveDocumentSubOptions verbSubOptions)
         {
-            throw new NotImplementedException();
+            string documentID = verbSubOptions.DocumentID;
+            LuceneSupport.LuceneSupport.RemoveDocuments(verbSubOptions.LuceneIndexRoot, documentID);
         }
 
         private static void DoAddDocument(AddDocumentSubOptions verbSubOptions)
@@ -94,7 +97,8 @@ namespace IndexTool
                 {
                     foreach (var serviceMethod in service.Service.SelectMany(ser => ser.Method))
                     {
-                        string id = file.Name;
+                        string id = file.Name; //.Replace("-", "").Replace(".", "");
+                        //id = Guid.NewGuid().ToString();
                         string serviceNameSpace = String.IsNullOrEmpty(serviceMethod.semanticName)
                                                       ? service.contractNamespaceName
                                                       : serviceMethod.semanticName;
@@ -102,17 +106,24 @@ namespace IndexTool
                         doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.ANALYZED));
                         doc.Add(new Field("ServiceDomainName", serviceNameSpace, Field.Store.YES, Field.Index.ANALYZED));
                         doc.Add(new Field("ServiceName", serviceMethod.name, Field.Store.YES, Field.Index.ANALYZED));
-                        Field field;
                         docs.Add(doc);
                     }
                 }
             }
-            LuceneSupport.LuceneSupport.AddDocuments(verbSubOptions.LuceneIndexRoot, docs.ToArray());
+            LuceneSupport.LuceneSupport.AddDocuments(verbSubOptions.LuceneIndexRoot, docs.ToArray(), new WhitespaceAnalyzer());
         }
 
         private static void DoReindex(ReindexSubOptions verbSubOptions)
         {
-            Console.WriteLine(verbSubOptions.CatalogueRepositoryRoot);
+            DirectoryInfo dirInfo = new DirectoryInfo(verbSubOptions.LuceneIndexRoot);
+            dirInfo.Delete(true);
+            LuceneSupport.LuceneSupport.CreateIndex(verbSubOptions.LuceneIndexRoot);
+            DoAddDocument(new AddDocumentSubOptions
+                {
+                    CatalogueRepositoryRoot = verbSubOptions.CatalogueRepositoryRoot,
+                    DocumentFilter = verbSubOptions.DocumentFilter,
+                    IndexName = verbSubOptions.IndexName,
+                });
         }
     }
 }

@@ -74,6 +74,14 @@ namespace IndexTool
 
     class ReindexSubOptions : CommonSubOptions
     {
+        [Option('d', "documentFilter", HelpText = "Document file filter (applied from Repository Root)", DefaultValue = "*.xml")]
+        public string DocumentFilter { get; set; }
+
+        public FileInfo[] GetDocumentFiles()
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(CatalogueRepositoryRoot);
+            return dirInfo.GetFiles(DocumentFilter, SearchOption.AllDirectories);
+        }
     }
 
     class AddDocumentSubOptions : CommonSubOptions
