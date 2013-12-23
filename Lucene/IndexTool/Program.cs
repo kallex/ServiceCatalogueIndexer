@@ -88,24 +88,27 @@ namespace IndexTool
         private static void DoAddDocument(AddDocumentSubOptions verbSubOptions)
         {
             FileInfo[] files = verbSubOptions.GetDocumentFiles();
-            XmlSerializer serializer = new XmlSerializer(typeof(ServiceModelType));
+            XmlSerializer serializer = new XmlSerializer(typeof(ServiceModelAbstractionType));
             List<Document> docs = new List<Document>();
             foreach (var file in files)
             {
-                ServiceModelType serviceModel = (ServiceModelType) serializer.Deserialize(file.OpenRead());
+                ServiceModelAbstractionType serviceModel = (ServiceModelAbstractionType)serializer.Deserialize(file.OpenRead());
                 foreach (var service in serviceModel.Services)
                 {
-                    foreach (var serviceMethod in service.Service.SelectMany(ser => ser.Method))
+                    foreach (var serviceMethod in service.Service.SelectMany(ser => ser.Operation))
                     {
                         string id = file.Name; //.Replace("-", "").Replace(".", "");
                         //id = Guid.NewGuid().ToString();
-                        string serviceNameSpace = String.IsNullOrEmpty(serviceMethod.semanticName)
-                                                      ? service.contractNamespaceName
-                                                      : serviceMethod.semanticName;
+                        string serviceNameSpace = serviceMethod.semanticDomainName;
                         Document doc = new Document();
                         doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.ANALYZED));
                         doc.Add(new Field("ServiceDomainName", serviceNameSpace, Field.Store.YES, Field.Index.ANALYZED));
                         doc.Add(new Field("ServiceName", serviceMethod.name, Field.Store.YES, Field.Index.ANALYZED));
+                        foreach (var usesOperation in serviceMethod.UsesOperation ?? new UsesOperationType[0])
+                        {
+                            doc.Add(new Field("UsesOperationDomainName", usesOperation.semanticDomainName, Field.Store.YES, Field.Index.ANALYZED));
+                            doc.Add(new Field("UsesOperationName", usesOperation.name, Field.Store.YES, Field.Index.ANALYZED));
+                        }
                         docs.Add(doc);
                     }
                 }

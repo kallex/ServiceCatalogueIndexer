@@ -1,62 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- edited with XMLSpy v2011 rel. 3 sp1 (x64) (http://www.altova.com) by Kalle Launiala (Citrus Solutions Oy) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" id="ServiceLayer_v1_0">
-	<xs:element name="ServiceModel" type="ServiceModelType"/>
-	<xs:complexType name="PropertyType">
+	<xs:attributeGroup name="SemanticName">
 		<xs:attribute name="name" type="xs:string" use="required"/>
-		<xs:attribute name="dataType" type="xs:string" use="required"/>
-		<xs:attribute name="initializationExpression" type="xs:string">
-			<xs:annotation>
-				<xs:documentation>(Opt = "") If given, generated as-is to property field assignment.</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
-		<xs:attribute name="semanticName" type="xs:string" use="required"/>
-	</xs:complexType>
+		<xs:attribute name="semanticDomainName" type="xs:string" use="required"/>
+	</xs:attributeGroup>
+	<xs:element name="ServiceModelAbstraction" type="ServiceModelAbstractionType"/>
 	<xs:complexType name="CompositeTypeType">
 		<xs:sequence>
-			<xs:element name="Property" type="PropertyType" maxOccurs="unbounded"/>
+			<xs:element name="Property" type="SemanticDataType" maxOccurs="unbounded"/>
 		</xs:sequence>
-		<xs:attribute name="name" type="xs:string" use="required"/>
+		<xs:attributeGroup ref="SemanticName"/>
 	</xs:complexType>
 	<xs:complexType name="ParameterType">
-		<xs:attribute name="name" type="xs:string" use="required"/>
+		<xs:attributeGroup ref="SemanticName"/>
 		<xs:attribute name="dataType" type="xs:string" use="required"/>
-		<xs:attribute name="semanticName" type="xs:string" use="required"/>
 	</xs:complexType>
-	<xs:complexType name="MethodType">
+	<xs:complexType name="OperationType">
 		<xs:sequence>
-			<xs:element name="Parameter" type="ParameterType" minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="Parameter" type="SemanticDataType" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation>(Opt) Method parameter definition.</xs:documentation>
 				</xs:annotation>
 			</xs:element>
+			<xs:element name="UsesOperation" type="UsesOperationType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="ReturnValue" type="SemanticDataType" minOccurs="0"/>
 		</xs:sequence>
-		<xs:attribute name="name" type="xs:string" use="required"/>
-		<xs:attribute name="returnValueType" type="xs:string" default='""'/>
-		<xs:attribute name="semanticName" type="xs:string" use="optional" default="">
-			<xs:annotation>
-				<xs:documentation>(Opt = "") Defaults to parent contract semantic name.</xs:documentation>
-			</xs:annotation>
-		</xs:attribute>
+		<xs:attributeGroup ref="SemanticName"/>
 	</xs:complexType>
 	<xs:complexType name="ServiceType">
 		<xs:sequence>
-			<xs:element name="Method" type="MethodType" maxOccurs="unbounded"/>
+			<xs:element name="Operation" type="OperationType" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:string" use="required"/>
 	</xs:complexType>
 	<xs:complexType name="ServicesType">
 		<xs:sequence>
-			<xs:element name="Service" type="ServiceType" maxOccurs="unbounded"/>
+			<xs:element name="Service" type="ServiceType" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="CompositeType" type="CompositeTypeType" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="contractNamespaceName" type="xs:string" use="required"/>
 		<xs:attribute name="clientNamespaceName" type="xs:string" use="required"/>
 		<xs:attribute name="serverNamespaceName" type="xs:string" use="required"/>
 	</xs:complexType>
-	<xs:complexType name="ServiceModelType">
+	<xs:complexType name="ServiceModelAbstractionType">
 		<xs:sequence>
 			<xs:element name="Services" type="ServicesType" maxOccurs="unbounded"/>
 		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SemanticDataType">
+		<xs:attributeGroup ref="SemanticName"/>
+		<xs:attribute name="dataType" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="UsesOperationType">
+		<xs:attributeGroup ref="SemanticName"/>
 	</xs:complexType>
 </xs:schema>
