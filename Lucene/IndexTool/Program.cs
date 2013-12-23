@@ -92,21 +92,24 @@ namespace IndexTool
             List<Document> docs = new List<Document>();
             foreach (var file in files)
             {
-                ServiceModelAbstractionType serviceModel = (ServiceModelAbstractionType)serializer.Deserialize(file.OpenRead());
-                foreach (var service in serviceModel.Services)
+                ServiceModelAbstractionType serviceModelAbs = (ServiceModelAbstractionType)serializer.Deserialize(file.OpenRead());
+                foreach (var serviceModel in serviceModelAbs.ServiceModel)
                 {
-                    foreach (var operation in service.Service.SelectMany(ser => ser.Operation))
+                    foreach (var operation in serviceModel.Service.SelectMany(ser => ser.Operation))
                     {
                         string id = file.Name; //.Replace("-", "").Replace(".", "");
                         //id = Guid.NewGuid().ToString();
                         string serviceNameSpace = operation.semanticTypeName;
                         Document doc = new Document();
-                        doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.ANALYZED));
-                        doc.Add(new Field("SemanticTypeName", serviceNameSpace, Field.Store.YES, Field.Index.ANALYZED));
-                        doc.Add(new Field("OperationName", operation.name, Field.Store.YES, Field.Index.ANALYZED));
+                        doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                        doc.Add(new Field("SemanticTypeName", serviceNameSpace, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                        doc.Add(new Field("OperationName", operation.name, Field.Store.YES, Field.Index.NOT_ANALYZED));
                         foreach (var usesOperation in operation.UsesOperation ?? new UsesOperationType[0])
                         {
-                            doc.Add(new Field("UsesOperation", usesOperation.semanticTypeName, Field.Store.YES, Field.Index.ANALYZED));
+                            Console.WriteLine("Adding usesoperation: " + operation.semanticTypeName + " " + usesOperation.semanticTypeName);
+                            Field field = new Field("UsesOperation", usesOperation.semanticTypeName, Field.Store.YES,
+                                                    Field.Index.NOT_ANALYZED, Field.TermVector.YES);
+                            doc.Add(field);
                         }
                         docs.Add(doc);
                     }

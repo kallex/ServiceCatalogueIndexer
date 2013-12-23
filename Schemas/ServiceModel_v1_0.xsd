@@ -40,7 +40,7 @@
 		</xs:attribute>
 	</xs:attributeGroup>
 	<xs:element name="ServiceModelAbstraction" type="ServiceModelAbstractionType"/>
-	<xs:complexType name="CompositeTypeType">
+	<xs:complexType name="DataContractType">
 		<xs:sequence>
 			<xs:element name="Property" type="SemanticDataType" maxOccurs="unbounded"/>
 		</xs:sequence>
@@ -68,10 +68,10 @@
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:string" use="required"/>
 	</xs:complexType>
-	<xs:complexType name="ServicesType">
+	<xs:complexType name="ServiceModelType">
 		<xs:sequence>
 			<xs:element name="Service" type="ServiceType" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="CompositeType" type="CompositeTypeType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="DataContract" type="DataContractType" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="contractNamespaceName" type="xs:string" use="required"/>
 		<xs:attribute name="clientNamespaceName" type="xs:string" use="required"/>
@@ -79,7 +79,7 @@
 	</xs:complexType>
 	<xs:complexType name="ServiceModelAbstractionType">
 		<xs:sequence>
-			<xs:element name="Services" type="ServicesType" maxOccurs="unbounded"/>
+			<xs:element name="ServiceModel" type="ServiceModelType" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="SemanticDataType">

@@ -23,16 +23,16 @@ using System.Xml.Serialization;
 [System.Xml.Serialization.XmlRootAttribute("ServiceModelAbstraction", Namespace="", IsNullable=false)]
 public partial class ServiceModelAbstractionType {
     
-    private ServicesType[] servicesField;
+    private ServiceModelType[] serviceModelField;
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute("Services")]
-    public ServicesType[] Services {
+    [System.Xml.Serialization.XmlElementAttribute("ServiceModel")]
+    public ServiceModelType[] ServiceModel {
         get {
-            return this.servicesField;
+            return this.serviceModelField;
         }
         set {
-            this.servicesField = value;
+            this.serviceModelField = value;
         }
     }
 }
@@ -42,11 +42,11 @@ public partial class ServiceModelAbstractionType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-public partial class ServicesType {
+public partial class ServiceModelType {
     
     private ServiceType[] serviceField;
     
-    private CompositeTypeType[] compositeTypeField;
+    private DataContractType[] dataContractField;
     
     private string contractNamespaceNameField;
     
@@ -66,13 +66,13 @@ public partial class ServicesType {
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute("CompositeType")]
-    public CompositeTypeType[] CompositeType {
+    [System.Xml.Serialization.XmlElementAttribute("DataContract")]
+    public DataContractType[] DataContract {
         get {
-            return this.compositeTypeField;
+            return this.dataContractField;
         }
         set {
-            this.compositeTypeField = value;
+            this.dataContractField = value;
         }
     }
     
@@ -287,7 +287,7 @@ public partial class SemanticDataType {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-public partial class CompositeTypeType {
+public partial class DataContractType {
     
     private SemanticDataType[] propertyField;
     
