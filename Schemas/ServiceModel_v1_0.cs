@@ -155,11 +155,11 @@ public partial class OperationType {
     
     private UsesOperationType[] usesOperationField;
     
-    private SemanticDataType returnValueField;
+    private SemanticDataType[] returnValueField;
     
     private string nameField;
     
-    private string semanticDomainNameField;
+    private string semanticTypeNameField;
     
     /// <remarks/>
     [System.Xml.Serialization.XmlElementAttribute("Parameter")]
@@ -184,7 +184,8 @@ public partial class OperationType {
     }
     
     /// <remarks/>
-    public SemanticDataType ReturnValue {
+    [System.Xml.Serialization.XmlElementAttribute("ReturnValue")]
+    public SemanticDataType[] ReturnValue {
         get {
             return this.returnValueField;
         }
@@ -206,12 +207,12 @@ public partial class OperationType {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string semanticDomainName {
+    public string semanticTypeName {
         get {
-            return this.semanticDomainNameField;
+            return this.semanticTypeNameField;
         }
         set {
-            this.semanticDomainNameField = value;
+            this.semanticTypeNameField = value;
         }
     }
 }
@@ -225,9 +226,15 @@ public partial class SemanticDataType {
     
     private string nameField;
     
+    private string semanticTypeNameField;
+    
     private string dataTypeField;
     
-    private string semanticDomainNameField;
+    private bool isArrayField;
+    
+    public SemanticDataType() {
+        this.isArrayField = false;
+    }
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
@@ -237,6 +244,17 @@ public partial class SemanticDataType {
         }
         set {
             this.nameField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string semanticTypeName {
+        get {
+            return this.semanticTypeNameField;
+        }
+        set {
+            this.semanticTypeNameField = value;
         }
     }
     
@@ -253,12 +271,13 @@ public partial class SemanticDataType {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string semanticDomainName {
+    [System.ComponentModel.DefaultValueAttribute(false)]
+    public bool isArray {
         get {
-            return this.semanticDomainNameField;
+            return this.isArrayField;
         }
         set {
-            this.semanticDomainNameField = value;
+            this.isArrayField = value;
         }
     }
 }
@@ -274,7 +293,7 @@ public partial class CompositeTypeType {
     
     private string nameField;
     
-    private string semanticDomainNameField;
+    private string semanticTypeNameField;
     
     /// <remarks/>
     [System.Xml.Serialization.XmlElementAttribute("Property")]
@@ -300,12 +319,12 @@ public partial class CompositeTypeType {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string semanticDomainName {
+    public string semanticTypeName {
         get {
-            return this.semanticDomainNameField;
+            return this.semanticTypeNameField;
         }
         set {
-            this.semanticDomainNameField = value;
+            this.semanticTypeNameField = value;
         }
     }
 }
@@ -319,7 +338,7 @@ public partial class UsesOperationType {
     
     private string nameField;
     
-    private string semanticDomainNameField;
+    private string semanticTypeNameField;
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
@@ -334,12 +353,12 @@ public partial class UsesOperationType {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string semanticDomainName {
+    public string semanticTypeName {
         get {
-            return this.semanticDomainNameField;
+            return this.semanticTypeNameField;
         }
         set {
-            this.semanticDomainNameField = value;
+            this.semanticTypeNameField = value;
         }
     }
 }

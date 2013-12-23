@@ -1,9 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- edited with XMLSpy v2011 rel. 3 sp1 (x64) (http://www.altova.com) by Kalle Launiala (Citrus Solutions Oy) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" id="ServiceLayer_v1_0">
+	<xs:attributeGroup name="SemanticType">
+		<xs:attribute name="semanticTypeName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Full semantic type name, like namespace.class - name. Example 'ProtonIT.Demo.Customer'</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="dataType" type="xs:string" use="required"/>
+	</xs:attributeGroup>
 	<xs:attributeGroup name="SemanticName">
-		<xs:attribute name="name" type="xs:string" use="required"/>
-		<xs:attribute name="semanticDomainName" type="xs:string" use="required"/>
+		<xs:attribute name="name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>"Local" scope name, used for code/artifact generation.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="semanticTypeName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Full semantic type name, like namespace.class - name. Example 'ProtonIT.Demo.Customer'</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<xs:attributeGroup name="SemanticNameAndType">
+		<xs:attribute name="name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>"Local" scope name, used for code/artifact generation.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="semanticTypeName" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>Full semantic type name, like namespace.class - name. Example 'ProtonIT.Demo.Customer'</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="dataType" type="xs:string" use="required"/>
+		<xs:attribute name="isArray" type="xs:boolean" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>(Opt = false) Is data used as array. This is different from semantically defined collections. Array is technical storage bound definition, possibly order preserving collection of independent semantic items.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:attributeGroup>
 	<xs:element name="ServiceModelAbstraction" type="ServiceModelAbstractionType"/>
 	<xs:complexType name="CompositeTypeType">
@@ -13,8 +47,8 @@
 		<xs:attributeGroup ref="SemanticName"/>
 	</xs:complexType>
 	<xs:complexType name="ParameterType">
-		<xs:attributeGroup ref="SemanticName"/>
-		<xs:attribute name="dataType" type="xs:string" use="required"/>
+		<xs:attribute name="name" type="xs:string" use="required"/>
+		<xs:attributeGroup ref="SemanticType"/>
 	</xs:complexType>
 	<xs:complexType name="OperationType">
 		<xs:sequence>
@@ -24,7 +58,7 @@
 				</xs:annotation>
 			</xs:element>
 			<xs:element name="UsesOperation" type="UsesOperationType" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="ReturnValue" type="SemanticDataType" minOccurs="0"/>
+			<xs:element name="ReturnValue" type="SemanticDataType" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attributeGroup ref="SemanticName"/>
 	</xs:complexType>
@@ -49,8 +83,7 @@
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="SemanticDataType">
-		<xs:attributeGroup ref="SemanticName"/>
-		<xs:attribute name="dataType" type="xs:string" use="required"/>
+		<xs:attributeGroup ref="SemanticNameAndType"/>
 	</xs:complexType>
 	<xs:complexType name="UsesOperationType">
 		<xs:attributeGroup ref="SemanticName"/>

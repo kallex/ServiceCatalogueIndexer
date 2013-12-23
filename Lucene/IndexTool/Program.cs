@@ -95,19 +95,18 @@ namespace IndexTool
                 ServiceModelAbstractionType serviceModel = (ServiceModelAbstractionType)serializer.Deserialize(file.OpenRead());
                 foreach (var service in serviceModel.Services)
                 {
-                    foreach (var serviceMethod in service.Service.SelectMany(ser => ser.Operation))
+                    foreach (var operation in service.Service.SelectMany(ser => ser.Operation))
                     {
                         string id = file.Name; //.Replace("-", "").Replace(".", "");
                         //id = Guid.NewGuid().ToString();
-                        string serviceNameSpace = serviceMethod.semanticDomainName;
+                        string serviceNameSpace = operation.semanticTypeName;
                         Document doc = new Document();
                         doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.ANALYZED));
-                        doc.Add(new Field("ServiceDomainName", serviceNameSpace, Field.Store.YES, Field.Index.ANALYZED));
-                        doc.Add(new Field("ServiceName", serviceMethod.name, Field.Store.YES, Field.Index.ANALYZED));
-                        foreach (var usesOperation in serviceMethod.UsesOperation ?? new UsesOperationType[0])
+                        doc.Add(new Field("SemanticTypeName", serviceNameSpace, Field.Store.YES, Field.Index.ANALYZED));
+                        doc.Add(new Field("OperationName", operation.name, Field.Store.YES, Field.Index.ANALYZED));
+                        foreach (var usesOperation in operation.UsesOperation ?? new UsesOperationType[0])
                         {
-                            doc.Add(new Field("UsesOperationDomainName", usesOperation.semanticDomainName, Field.Store.YES, Field.Index.ANALYZED));
-                            doc.Add(new Field("UsesOperationName", usesOperation.name, Field.Store.YES, Field.Index.ANALYZED));
+                            doc.Add(new Field("UsesOperation", usesOperation.semanticTypeName, Field.Store.YES, Field.Index.ANALYZED));
                         }
                         docs.Add(doc);
                     }
