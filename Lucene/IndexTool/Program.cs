@@ -20,7 +20,7 @@ namespace IndexTool
         private static Options options = new Options();
         static void Main(string[] args)
         {
-            Debugger.Launch();
+            //Debugger.Launch();
             bool success = CommandLine.Parser.Default.ParseArguments(args, options, OnVerbCommand);
             if (!success)
             {
@@ -141,8 +141,16 @@ namespace IndexTool
                         SemanticThumbprint = hashValue
                     };
                 var semanticUsages = getTechSemanticStrArray(operation.Parameter);
-                serviceNode.Consumes.AddRange(
-                    semanticUsages.Select(usage => new SemanticItemNode {SemanticItemValue = usage}));
+                serviceNode.ConsumeFields.AddRange(semanticUsages);
+                if (operation.ReturnValue != null)
+                {
+                    var semanticProducing = getTechSemanticStrArray(operation.ReturnValue);
+                    serviceNode.ProducesFields.AddRange(semanticProducing);
+                }
+                if (operation.UsesOperation != null)
+                {
+                    serviceNode.ConsumesServices.AddRange(operation.UsesOperation.Select(use => use.semanticTypeName));
+                }
                 serviceNodes.Add(serviceNode);
             }
             return serviceNodes.ToArray();
