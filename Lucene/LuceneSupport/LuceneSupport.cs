@@ -24,6 +24,7 @@ namespace LuceneSupport
                 analyzer = new StandardAnalyzer(Version.LUCENE_30);
             var writer = new IndexWriter(indexDirectory, analyzer, recreateIndex, IndexWriter.MaxFieldLength.UNLIMITED);
             actionWithWriter(writer);
+            //writer.Commit();
             writer.Optimize();
             writer.Flush(true, true, true);
             writer.Dispose();
