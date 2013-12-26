@@ -20,6 +20,7 @@ namespace IndexTool
         public Options()
         {
             ReindexVerb = new ReindexSubOptions();
+            ReindexGraphVerb = new ReindexGraphSubOptions();
             AddDocumentVerb = new AddDocumentSubOptions();
             RemoveDocumentVerb = new RemoveDocumentSubOptions();
             QueryVerb = new QuerySubOptions();
@@ -36,6 +37,10 @@ namespace IndexTool
 
         [VerbOption("query", HelpText = "Query document index")]
         public QuerySubOptions QueryVerb { get; set; }
+
+        [VerbOption("reindex", HelpText = "Reindex whole catalogue to graph db (Neo4j)")]
+        public ReindexGraphSubOptions ReindexGraphVerb { get; set; }
+
 
     }
 
@@ -73,6 +78,18 @@ namespace IndexTool
     }
 
     class ReindexSubOptions : CommonSubOptions
+    {
+        [Option('d', "documentFilter", HelpText = "Document file filter (applied from Repository Root)", DefaultValue = "*.xml")]
+        public string DocumentFilter { get; set; }
+
+        public FileInfo[] GetDocumentFiles()
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(CatalogueRepositoryRoot);
+            return dirInfo.GetFiles(DocumentFilter, SearchOption.AllDirectories);
+        }
+    }
+
+    class ReindexGraphSubOptions : CommonSubOptions
     {
         [Option('d', "documentFilter", HelpText = "Document file filter (applied from Repository Root)", DefaultValue = "*.xml")]
         public string DocumentFilter { get; set; }
