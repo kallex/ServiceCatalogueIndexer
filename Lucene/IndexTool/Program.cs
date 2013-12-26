@@ -32,18 +32,37 @@ namespace IndexTool
         {
             if (verbSubOptions == null)
                 return;
-            CommonSubOptions commonOptions = (CommonSubOptions) verbSubOptions;
-            try
+            CommonLuceneSubOptions commonLuceneOptions = verbSubOptions as CommonLuceneSubOptions;
+            if (commonLuceneOptions != null)
             {
-                commonOptions.Validate();
+                try
+                {
+                    commonLuceneOptions.Validate();
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    return;
+                }
             }
-            catch (ArgumentException ex)
+            CommonGraphSubOptions commonGraphOptions = verbSubOptions as CommonGraphSubOptions;
+            if (commonGraphOptions != null)
             {
-                Console.WriteLine(ex.Message);
-                return;
+                try
+                {
+                    commonGraphOptions.Validate();
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    return;
+                }
             }
             switch (verb)
             {
+                case "reindexgraph":
+                    DoReindexGraph((ReindexGraphSubOptions) verbSubOptions);
+                    break;
                 case "reindex":
                     DoReindex((ReindexSubOptions) verbSubOptions);
                     break;
@@ -304,5 +323,16 @@ namespace IndexTool
                     IndexName = verbSubOptions.IndexName,
                 });
         }
+
+        private static void DoReindexGraph(ReindexGraphSubOptions verbSubOptions)
+        {
+            GraphIndexSupport.ClearDB();
+            DoAddGraphDocuments(new AddGraphDocumentSubOptions
+            {
+                CatalogueRepositoryRoot = verbSubOptions.CatalogueRepositoryRoot,
+                DocumentFilter = verbSubOptions.DocumentFilter,
+            });
+        }
+
     }
 }
