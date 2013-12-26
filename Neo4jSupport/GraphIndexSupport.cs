@@ -30,10 +30,19 @@ namespace Neo4jSupport
 
         public static void ClearDB()
         {
+            //var queryText =
+            //    @"START n = node(*) OPTIONAL MATCH n-[r]-() WHERE (ID(n)>0 AND ID(n)<10000) DELETE n, r;";
+            CurrClient.Cypher.Start(new { n = All.Nodes})
+                .OptionalMatch("n-[r]-()")
+                .Where("(ID(n)>0 AND ID(n)<10000)")
+                .Delete("n, r")
+                .ExecuteWithoutResults();
+
         }
 
         public static void AddServices(ServiceNode[] services)
         {
+            ClearDB();
             foreach (ServiceNode service in services)
             {
                 var newService = new
