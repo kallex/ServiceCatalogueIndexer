@@ -118,6 +118,7 @@ namespace IndexTool
                 doc.Add(getField("SemanticCombinedString", hashValue));
                 string semanticThumbprintSHA256 = CalculateHexThumbprintSha256(hashValue);
                 doc.Add(new Field("SemanticThumbprint", semanticThumbprintSHA256, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                addDataModelProvider(dataModel, doc);
                 dataModelDocs.Add(doc);
             }
             return dataModelDocs;
@@ -146,18 +147,10 @@ namespace IndexTool
                 doc.Add(new Field("SemanticCombinedString", hashValue, Field.Store.YES, Field.Index.NOT_ANALYZED));
                 string semanticThumbprintSHA256 = CalculateHexThumbprintSha256(hashValue);
                 doc.Add(new Field("SemanticThumbprint", semanticThumbprintSHA256, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                addOperationRequiringInputs(operation, doc);
+                addOperationProvidingOutput(operation, doc);
                 if (operation.UsesOperation != null)
                 {
-                    /*
-                            string[] semanticTypeFields =
-                                operation.UsesOperation.Select(usesOperation => usesOperation.semanticTypeName)
-                                         .ToArray();
-                            string singleField = String.Join(" ", semanticTypeFields);
-                            Field field = new Field("UsesOperation", singleField, Field.Store.YES,
-                                                    Field.Index.ANALYZED);
-
-                            doc.Add(field);
-                             */
                     var fields = operation.UsesOperation.Select(usesOperation =>
                                                                 new Field("UsesOperation",
                                                                           usesOperation.semanticTypeName,
@@ -168,6 +161,40 @@ namespace IndexTool
                 operationDocs.Add(doc);
             }
             return operationDocs;
+        }
+
+        private static void addDataModelProvider(DataContractType dataContract, Document doc)
+        {
+            var dataValues = getTechSemanticStrArray(dataContract.Property);
+            foreach (var dataValue in dataValues)
+            {
+                string hashValue = CalculateHexThumbprintSha256(dataValue);
+                doc.Add(getField("DataModelFieldString", dataValue));
+                doc.Add(getField("DataModelFieldHASH", hashValue));
+            }
+
+        }
+
+        private static void addOperationProvidingOutput(OperationType operation, Document doc)
+        {
+            var outputValues = getTechSemanticStrArray(operation.ReturnValue);
+            foreach (var outputValue in outputValues)
+            {
+                string hashValue = CalculateHexThumbprintSha256(outputValue);
+                doc.Add(getField("ProvidingFieldString", outputValue));
+                doc.Add(getField("ProvidingFieldHASH", hashValue));
+            }
+        }
+
+        private static void addOperationRequiringInputs(OperationType operation, Document doc)
+        {
+            var inputValues = getTechSemanticStrArray(operation.Parameter);
+            foreach (var inputValue in inputValues)
+            {
+                string hashValue = CalculateHexThumbprintSha256(inputValue);
+                doc.Add(getField("RequiringFieldString", inputValue));
+                doc.Add(getField("RequiringFieldHASH", hashValue));
+            }
         }
 
         private static string GetCombinedSemanticHashValue(DataContractType dataContract)
@@ -199,13 +226,19 @@ namespace IndexTool
 
         private static string getTechSemanticConcatenation(SemanticDataType[] semanticTypes)
         {
-            if (semanticTypes == null)
-                return "";
-            var strArray = semanticTypes.OrderBy(semType => semType.semanticTypeName)
-                                         .ThenBy(semType => semType.isArray)
-                                         .Select(semType => semType.dataType + (semType.isArray ? "[]" : "") +
-                                                            ":" + semType.semanticTypeName).ToArray();
+            var strArray = getTechSemanticStrArray(semanticTypes);
             return string.Join(";", strArray);
+        }
+
+        private static string[] getTechSemanticStrArray(SemanticDataType[] semanticTypes)
+        {
+            if(semanticTypes == null)
+                return new string[0];
+            var strArray = semanticTypes.OrderBy(semType => semType.semanticTypeName)
+                                        .ThenBy(semType => semType.isArray)
+                                        .Select(semType => semType.dataType + (semType.isArray ? "[]" : "") +
+                                                           ":" + semType.semanticTypeName).ToArray();
+            return strArray;
         }
 
         private static void DoReindex(ReindexSubOptions verbSubOptions)
