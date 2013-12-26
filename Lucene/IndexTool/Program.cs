@@ -170,6 +170,11 @@ namespace IndexTool
                 {
                     serviceNode.ConsumesServices.AddRange(operation.UsesOperation.Select(use => use.semanticTypeName));
                 }
+                if (operation.RequiresContext != null)
+                {
+                    var contextUsages = getTechSemanticStrArray(operation.RequiresContext);
+                    serviceNode.ConsumeFields.AddRange(contextUsages);
+                }
                 serviceNodes.Add(serviceNode);
             }
             return serviceNodes.ToArray();
@@ -225,7 +230,16 @@ namespace IndexTool
                                                                 new Field("UsesOperation",
                                                                           usesOperation.semanticTypeName,
                                                                           Field.Store.YES,
-                                                                          Field.Index.NOT_ANALYZED)).ToArray();
+                                                                          Field.Index.NOT_ANALYZED))
+                                          .ToArray();
+                    Array.ForEach(fields, doc.Add);
+                }
+                if (operation.RequiresContext != null)
+                {
+                    var fields = operation.RequiresContext.Select(reqCtx =>
+                                                                  new Field("RequiresContext", reqCtx.semanticTypeName,
+                                                                            Field.Store.YES, Field.Index.NOT_ANALYZED))
+                                          .ToArray();
                     Array.ForEach(fields, doc.Add);
                 }
                 operationDocs.Add(doc);

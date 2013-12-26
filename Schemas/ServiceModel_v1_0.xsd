@@ -57,7 +57,8 @@
 					<xs:documentation>(Opt) Method parameter definition.</xs:documentation>
 				</xs:annotation>
 			</xs:element>
-			<xs:element name="UsesOperation" type="UsesOperationType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="RequiresContext" type="SemanticDataType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="UsesOperation" type="SemanticNameType" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="ReturnValue" type="SemanticDataType" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attributeGroup ref="SemanticName"/>
@@ -85,7 +86,7 @@
 	<xs:complexType name="SemanticDataType">
 		<xs:attributeGroup ref="SemanticNameAndType"/>
 	</xs:complexType>
-	<xs:complexType name="UsesOperationType">
+	<xs:complexType name="SemanticNameType">
 		<xs:attributeGroup ref="SemanticName"/>
 	</xs:complexType>
 </xs:schema>

@@ -55,6 +55,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\Schemas\ServiceModel_v1_0.xsd">
+      <Link>ServiceModel_v1_0.xsd</Link>
+      <SubType>Designer</SubType>
+    </None>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
