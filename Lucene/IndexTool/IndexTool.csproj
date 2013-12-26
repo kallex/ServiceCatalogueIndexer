@@ -59,6 +59,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Neo4jSupport\Neo4jSupport.csproj">
+      <Project>{18883A86-7B22-4F88-9D73-89F84FA40609}</Project>
+      <Name>Neo4jSupport</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LuceneSupport\LuceneSupport.csproj">
       <Project>{99740890-12C7-436B-9E88-B053E19225C2}</Project>
       <Name>LuceneSupport</Name>

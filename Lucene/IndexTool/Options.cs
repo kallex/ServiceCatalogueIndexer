@@ -21,13 +21,18 @@ namespace IndexTool
         {
             ReindexVerb = new ReindexSubOptions();
             ReindexGraphVerb = new ReindexGraphSubOptions();
+            AddGraphDocumentVerb = new AddGraphDocumentSubOptions();
             AddDocumentVerb = new AddDocumentSubOptions();
+
             RemoveDocumentVerb = new RemoveDocumentSubOptions();
             QueryVerb = new QuerySubOptions();
         }
 
         [VerbOption("reindex", HelpText = "Reindex whole catalogue")]
         public ReindexSubOptions ReindexVerb { get; set; }
+
+        [VerbOption("addgraphdoc", HelpText = "Add or update document in graph index")]
+        public AddGraphDocumentSubOptions AddGraphDocumentVerb { get; set; }
 
         [VerbOption("adddoc", HelpText = "Add or update document in index")]
         public AddDocumentSubOptions AddDocumentVerb { get; set; }
@@ -102,6 +107,18 @@ namespace IndexTool
     }
 
     class AddDocumentSubOptions : CommonSubOptions
+    {
+        [Option('d', "documentFilter", HelpText = "Document file filter (applied from Repository Root)", Required = true)]
+        public string DocumentFilter { get; set; }
+
+        public FileInfo[] GetDocumentFiles()
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(CatalogueRepositoryRoot);
+            return dirInfo.GetFiles(DocumentFilter, SearchOption.AllDirectories);
+        }
+    }
+
+    class AddGraphDocumentSubOptions : CommonSubOptions
     {
         [Option('d', "documentFilter", HelpText = "Document file filter (applied from Repository Root)", Required = true)]
         public string DocumentFilter { get; set; }

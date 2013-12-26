@@ -14,7 +14,7 @@ using Version = Lucene.Net.Util.Version;
 
 namespace LuceneSupport
 {
-    public class LuceneSupport
+    public class FieldIndexSupport
     {
 
         private static void doWithWriter(string indexRoot, Action<IndexWriter> actionWithWriter, Analyzer analyzer, bool recreateIndex = false)

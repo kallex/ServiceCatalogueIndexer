@@ -10,6 +10,8 @@ using System.Xml.Linq;
 using System.Xml.Serialization;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
+using LuceneSupport;
+using Neo4jSupport;
 
 namespace IndexTool
 {
@@ -18,7 +20,7 @@ namespace IndexTool
         private static Options options = new Options();
         static void Main(string[] args)
         {
-            //Debugger.Launch();
+            Debugger.Launch();
             bool success = CommandLine.Parser.Default.ParseArguments(args, options, OnVerbCommand);
             if (!success)
             {
@@ -45,6 +47,9 @@ namespace IndexTool
                 case "reindex":
                     DoReindex((ReindexSubOptions) verbSubOptions);
                     break;
+                case "addgraphdoc":
+                    DoAddGraphDocuments((AddGraphDocumentSubOptions) verbSubOptions);
+                    break;
                 case "adddoc":
                     DoAddDocuments((AddDocumentSubOptions) verbSubOptions);
                     break;
@@ -68,7 +73,7 @@ namespace IndexTool
                 Console.Write("Enter query text: ");
                 queryText = Console.ReadLine();
             }
-            var result = LuceneSupport.LuceneSupport.PerformQuery(verbSubOptions.LuceneIndexRoot, queryText, "ServiceDomainName",
+            var result = FieldIndexSupport.PerformQuery(verbSubOptions.LuceneIndexRoot, queryText, "ServiceDomainName",
                 new WhitespaceAnalyzer());
             Console.WriteLine("Results ("+ result.Length + "):");
             foreach (var doc in result)
@@ -83,7 +88,24 @@ namespace IndexTool
         private static void DoRemoveDocument(RemoveDocumentSubOptions verbSubOptions)
         {
             string documentID = verbSubOptions.DocumentID;
-            LuceneSupport.LuceneSupport.RemoveDocuments(verbSubOptions.LuceneIndexRoot, documentID);
+            FieldIndexSupport.RemoveDocuments(verbSubOptions.LuceneIndexRoot, documentID);
+        }
+
+        private static void DoAddGraphDocuments(AddGraphDocumentSubOptions verbSubOptions)
+        {
+            FileInfo[] files = verbSubOptions.GetDocumentFiles();
+            XmlSerializer serializer = new XmlSerializer(typeof(ServiceModelAbstractionType));
+            List<ServiceNode> nodes = new List<ServiceNode>();
+            foreach (var file in files)
+            {
+                ServiceModelAbstractionType serviceModelAbs = (ServiceModelAbstractionType)serializer.Deserialize(file.OpenRead());
+                foreach (var serviceModel in serviceModelAbs.ServiceModel)
+                {
+                    var serviceNodes = GetServiceNodes(serviceModel, file.Name);
+                    nodes.AddRange(serviceNodes);
+                }
+            }
+            GraphIndexSupport.AddServices(nodes.ToArray());
         }
 
         private static void DoAddDocuments(AddDocumentSubOptions verbSubOptions)
@@ -102,7 +124,28 @@ namespace IndexTool
                     docs.AddRange(dataModelDocs);
                 }
             }
-            LuceneSupport.LuceneSupport.AddDocuments(verbSubOptions.LuceneIndexRoot, docs.ToArray(), new WhitespaceAnalyzer());
+            FieldIndexSupport.AddDocuments(verbSubOptions.LuceneIndexRoot, docs.ToArray(), new WhitespaceAnalyzer());
+        }
+
+        private static ServiceNode[] GetServiceNodes(ServiceModelType serviceModel, string name)
+        {
+            List<ServiceNode> serviceNodes = new List<ServiceNode>();
+            foreach (var operation in serviceModel.Service.SelectMany(ser => ser.Operation))
+            {
+                var semanticCombination = GetCombinedSemanticHashValue(operation);
+                var hashValue = CalculateHexThumbprintSha256(semanticCombination);
+                ServiceNode serviceNode = new ServiceNode
+                    {
+                        ID = name + "_" + operation.name,
+                        SemanticName = operation.semanticTypeName,
+                        SemanticThumbprint = hashValue
+                    };
+                var semanticUsages = getTechSemanticStrArray(operation.Parameter);
+                serviceNode.Consumes.AddRange(
+                    semanticUsages.Select(usage => new SemanticItemNode {SemanticItemValue = usage}));
+                serviceNodes.Add(serviceNode);
+            }
+            return serviceNodes.ToArray();
         }
 
         private static List<Document> GetDataModelDocs(ServiceModelType serviceModel, string fileName)
@@ -245,7 +288,7 @@ namespace IndexTool
         {
             DirectoryInfo dirInfo = new DirectoryInfo(verbSubOptions.LuceneIndexRoot);
             dirInfo.Delete(true);
-            LuceneSupport.LuceneSupport.CreateIndex(verbSubOptions.LuceneIndexRoot);
+            FieldIndexSupport.CreateIndex(verbSubOptions.LuceneIndexRoot);
             DoAddDocuments(new AddDocumentSubOptions
                 {
                     CatalogueRepositoryRoot = verbSubOptions.CatalogueRepositoryRoot,
