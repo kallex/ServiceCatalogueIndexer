@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -105,6 +106,10 @@ namespace IndexTool
                         doc.Add(new Field("FileName", file.Name, Field.Store.YES, Field.Index.NOT_ANALYZED));
                         doc.Add(new Field("SemanticTypeName", serviceNameSpace, Field.Store.YES, Field.Index.NOT_ANALYZED));
                         doc.Add(new Field("OperationName", operation.name, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                        string hashValue = GetCombinedSemanticHashValue(operation);
+                        doc.Add(new Field("SemanticCombinedString", hashValue, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                        string semanticThumbprintSHA256 = CalculateHexThumbprintSha256(hashValue);
+                        doc.Add(new Field("SemanticThumbprint", semanticThumbprintSHA256, Field.Store.YES, Field.Index.NOT_ANALYZED));
                         if (operation.UsesOperation != null)
                         {
                             /*
@@ -129,6 +134,36 @@ namespace IndexTool
                 }
             }
             LuceneSupport.LuceneSupport.AddDocuments(verbSubOptions.LuceneIndexRoot, docs.ToArray(), new WhitespaceAnalyzer());
+        }
+
+        private static string GetCombinedSemanticHashValue(OperationType operation)
+        {
+            var returnValueString = getTechSemanticConcatenation(operation.ReturnValue);
+            string parameterString = getTechSemanticConcatenation(operation.Parameter);
+            string nameString = operation.semanticTypeName;
+            string hashSource = string.Format("RETURN{0}-NAME{1}-PARAMETERS{2}",
+                          returnValueString, nameString, parameterString);
+            return hashSource;
+        }
+
+        private static string CalculateHexThumbprintSha256(string hashSource)
+        {
+            SHA256 sha256 = new SHA256Managed();
+            byte[] hashSourceBytes = Encoding.UTF8.GetBytes(hashSource);
+            byte[] hashResult = sha256.ComputeHash(hashSourceBytes);
+            string hexValue = BitConverter.ToString(hashResult).Replace("-", "");
+            return hexValue;
+        }
+
+        private static string getTechSemanticConcatenation(SemanticDataType[] semanticTypes)
+        {
+            if (semanticTypes == null)
+                return "";
+            var strArray = semanticTypes.OrderBy(semType => semType.semanticTypeName)
+                                         .ThenBy(semType => semType.isArray)
+                                         .Select(semType => semType.dataType + (semType.isArray ? "[]" : "") +
+                                                            ":" + semType.semanticTypeName).ToArray();
+            return string.Join(";", strArray);
         }
 
         private static void DoReindex(ReindexSubOptions verbSubOptions)
