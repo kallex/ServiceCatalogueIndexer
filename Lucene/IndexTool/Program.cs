@@ -97,22 +97,32 @@ namespace IndexTool
                 {
                     foreach (var operation in serviceModel.Service.SelectMany(ser => ser.Operation))
                     {
-                        string id = file.Name + operation.name; //.Replace("-", "").Replace(".", "");
+                        string id = file.Name + "_" + operation.name; //.Replace("-", "").Replace(".", "");
                         //id = Guid.NewGuid().ToString();
                         string serviceNameSpace = operation.semanticTypeName;
                         Document doc = new Document();
                         doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                        doc.Add(new Field("FileName", file.Name, Field.Store.YES, Field.Index.NOT_ANALYZED));
                         doc.Add(new Field("SemanticTypeName", serviceNameSpace, Field.Store.YES, Field.Index.NOT_ANALYZED));
                         doc.Add(new Field("OperationName", operation.name, Field.Store.YES, Field.Index.NOT_ANALYZED));
                         if (operation.UsesOperation != null)
                         {
+                            /*
                             string[] semanticTypeFields =
                                 operation.UsesOperation.Select(usesOperation => usesOperation.semanticTypeName)
                                          .ToArray();
                             string singleField = String.Join(" ", semanticTypeFields);
                             Field field = new Field("UsesOperation", singleField, Field.Store.YES,
                                                     Field.Index.ANALYZED);
+
                             doc.Add(field);
+                             */
+                            var fields = operation.UsesOperation.Select(usesOperation =>
+                                                                        new Field("UsesOperation",
+                                                                                  usesOperation.semanticTypeName,
+                                                                                  Field.Store.YES,
+                                                                                  Field.Index.NOT_ANALYZED)).ToArray();
+                            Array.ForEach(fields, doc.Add);
                         }
                         docs.Add(doc);
                     }
