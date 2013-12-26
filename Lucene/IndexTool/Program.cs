@@ -46,7 +46,7 @@ namespace IndexTool
                     DoReindex((ReindexSubOptions) verbSubOptions);
                     break;
                 case "adddoc":
-                    DoAddDocument((AddDocumentSubOptions) verbSubOptions);
+                    DoAddDocuments((AddDocumentSubOptions) verbSubOptions);
                     break;
                 case "removedoc":
                     DoRemoveDocument((RemoveDocumentSubOptions) verbSubOptions);
@@ -86,7 +86,7 @@ namespace IndexTool
             LuceneSupport.LuceneSupport.RemoveDocuments(verbSubOptions.LuceneIndexRoot, documentID);
         }
 
-        private static void DoAddDocument(AddDocumentSubOptions verbSubOptions)
+        private static void DoAddDocuments(AddDocumentSubOptions verbSubOptions)
         {
             FileInfo[] files = verbSubOptions.GetDocumentFiles();
             XmlSerializer serializer = new XmlSerializer(typeof(ServiceModelAbstractionType));
@@ -96,23 +96,59 @@ namespace IndexTool
                 ServiceModelAbstractionType serviceModelAbs = (ServiceModelAbstractionType)serializer.Deserialize(file.OpenRead());
                 foreach (var serviceModel in serviceModelAbs.ServiceModel)
                 {
-                    foreach (var operation in serviceModel.Service.SelectMany(ser => ser.Operation))
-                    {
-                        string id = file.Name + "_" + operation.name; //.Replace("-", "").Replace(".", "");
-                        //id = Guid.NewGuid().ToString();
-                        string serviceNameSpace = operation.semanticTypeName;
-                        Document doc = new Document();
-                        doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.NOT_ANALYZED));
-                        doc.Add(new Field("FileName", file.Name, Field.Store.YES, Field.Index.NOT_ANALYZED));
-                        doc.Add(new Field("SemanticTypeName", serviceNameSpace, Field.Store.YES, Field.Index.NOT_ANALYZED));
-                        doc.Add(new Field("OperationName", operation.name, Field.Store.YES, Field.Index.NOT_ANALYZED));
-                        string hashValue = GetCombinedSemanticHashValue(operation);
-                        doc.Add(new Field("SemanticCombinedString", hashValue, Field.Store.YES, Field.Index.NOT_ANALYZED));
-                        string semanticThumbprintSHA256 = CalculateHexThumbprintSha256(hashValue);
-                        doc.Add(new Field("SemanticThumbprint", semanticThumbprintSHA256, Field.Store.YES, Field.Index.NOT_ANALYZED));
-                        if (operation.UsesOperation != null)
-                        {
-                            /*
+                    var operationDocs = GetOperationDocs(serviceModel, file.Name);
+                    docs.AddRange(operationDocs);
+                    var dataModelDocs = GetDataModelDocs(serviceModel, file.Name);
+                    docs.AddRange(dataModelDocs);
+                }
+            }
+            LuceneSupport.LuceneSupport.AddDocuments(verbSubOptions.LuceneIndexRoot, docs.ToArray(), new WhitespaceAnalyzer());
+        }
+
+        private static List<Document> GetDataModelDocs(ServiceModelType serviceModel, string fileName)
+        {
+            List<Document> dataModelDocs = new List<Document>();
+            foreach (var dataModel in serviceModel.DataContract ?? new DataContractType[0])
+            {
+                string id = fileName + "_" + dataModel.name;
+                Document doc = new Document();
+                doc.Add(getField("ID", id));
+                doc.Add(getField("DocType", "DATAMODEL"));
+                string hashValue = GetCombinedSemanticHashValue(dataModel);
+                doc.Add(getField("SemanticCombinedString", hashValue));
+                string semanticThumbprintSHA256 = CalculateHexThumbprintSha256(hashValue);
+                doc.Add(new Field("SemanticThumbprint", semanticThumbprintSHA256, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                dataModelDocs.Add(doc);
+            }
+            return dataModelDocs;
+        }
+
+        private static IFieldable getField(string name, string value, bool analyzed = false)
+        {
+            return new Field(name, value, Field.Store.YES, analyzed ? Field.Index.ANALYZED : Field.Index.NOT_ANALYZED);
+        }
+
+        private static List<Document> GetOperationDocs(ServiceModelType serviceModel, string fileName)
+        {
+            List<Document> operationDocs = new List<Document>();
+            foreach (var operation in serviceModel.Service.SelectMany(ser => ser.Operation))
+            {
+                string id = fileName + "_" + operation.name; //.Replace("-", "").Replace(".", "");
+                //id = Guid.NewGuid().ToString();
+                string serviceNameSpace = operation.semanticTypeName;
+                Document doc = new Document();
+                doc.Add(new Field("ID", id, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                doc.Add(getField("DocType", "SERVICEMODEL"));
+                doc.Add(new Field("FileName", fileName, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                doc.Add(new Field("SemanticTypeName", serviceNameSpace, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                doc.Add(new Field("OperationName", operation.name, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                string hashValue = GetCombinedSemanticHashValue(operation);
+                doc.Add(new Field("SemanticCombinedString", hashValue, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                string semanticThumbprintSHA256 = CalculateHexThumbprintSha256(hashValue);
+                doc.Add(new Field("SemanticThumbprint", semanticThumbprintSHA256, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                if (operation.UsesOperation != null)
+                {
+                    /*
                             string[] semanticTypeFields =
                                 operation.UsesOperation.Select(usesOperation => usesOperation.semanticTypeName)
                                          .ToArray();
@@ -122,18 +158,24 @@ namespace IndexTool
 
                             doc.Add(field);
                              */
-                            var fields = operation.UsesOperation.Select(usesOperation =>
-                                                                        new Field("UsesOperation",
-                                                                                  usesOperation.semanticTypeName,
-                                                                                  Field.Store.YES,
-                                                                                  Field.Index.NOT_ANALYZED)).ToArray();
-                            Array.ForEach(fields, doc.Add);
-                        }
-                        docs.Add(doc);
-                    }
+                    var fields = operation.UsesOperation.Select(usesOperation =>
+                                                                new Field("UsesOperation",
+                                                                          usesOperation.semanticTypeName,
+                                                                          Field.Store.YES,
+                                                                          Field.Index.NOT_ANALYZED)).ToArray();
+                    Array.ForEach(fields, doc.Add);
                 }
+                operationDocs.Add(doc);
             }
-            LuceneSupport.LuceneSupport.AddDocuments(verbSubOptions.LuceneIndexRoot, docs.ToArray(), new WhitespaceAnalyzer());
+            return operationDocs;
+        }
+
+        private static string GetCombinedSemanticHashValue(DataContractType dataContract)
+        {
+            string propertyString = getTechSemanticConcatenation(dataContract.Property);
+            string hashSource = string.Format("MODEL{0}-PROPERTIES{1}",
+                                              dataContract.semanticTypeName, propertyString);
+            return hashSource;
         }
 
         private static string GetCombinedSemanticHashValue(OperationType operation)
@@ -171,7 +213,7 @@ namespace IndexTool
             DirectoryInfo dirInfo = new DirectoryInfo(verbSubOptions.LuceneIndexRoot);
             dirInfo.Delete(true);
             LuceneSupport.LuceneSupport.CreateIndex(verbSubOptions.LuceneIndexRoot);
-            DoAddDocument(new AddDocumentSubOptions
+            DoAddDocuments(new AddDocumentSubOptions
                 {
                     CatalogueRepositoryRoot = verbSubOptions.CatalogueRepositoryRoot,
                     DocumentFilter = verbSubOptions.DocumentFilter,
